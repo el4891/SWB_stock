@@ -65,8 +65,13 @@ def process(name, buy_rate_a, buy_rate_b, sell_rate_c, sell_rate_d, total_rate_e
             tmpMonth = nowMonth
 
         if price[i] < average_cost * (1 - buy_rate_a):
-            tmpStockNum = int((savedMoney + restMoney) * buy_rate_b / (1 + fee) / price[i] / 100) * 100
-            if tmpStockNum != 0:  # 购买一份了，那就买买买
+            tmpStockNum = int((savedMoney + restMoney) * (totalMoney / (savedMoney + restMoney)) * buy_rate_b / (1 + fee) / price[i] / 100) * 100
+
+            if tmpStockNum > int((savedMoney + restMoney) / (1 + fee) / price[i] / 100) * 100:
+                tmpStockNum = int((savedMoney + restMoney) / (1 + fee) / price[i] / 100) * 100
+
+            if tmpStockNum != 0:
+
                 total_cost = average_cost * stockNum
 
                 stockNum += tmpStockNum
@@ -76,20 +81,23 @@ def process(name, buy_rate_a, buy_rate_b, sell_rate_c, sell_rate_d, total_rate_e
 
                 total_cost += tmpStockNum * price[i]
                 average_cost = float(total_cost) / float(stockNum)
+                highest_recent = price[i]
 
         elif price[i] < highest_recent * (1 - sell_rate_c) and stockNum > 0:
             tmpStockNum = int(stockNum * sell_rate_d / 100) * 100
 
-            restMoney += (price[i] * tmpStockNum * (1 - fee))
-            stockNum = stockNum - tmpStockNum
-            stockMoney = price[i] * stockNum
-            highest_recent = price[i]
+            if tmpStockNum != 0:
+                restMoney += (price[i] * tmpStockNum * (1 - fee))
+                stockNum = stockNum - tmpStockNum
+                stockMoney = price[i] * stockNum
+                highest_recent = price[i]
+                average_cost = price[i]
 
-        # print('%s price %.3f limit %.3f stockNum %d totalMoney %d restMoney %d' % (date[i], price[1], limit[i], stockNum, totalMoney, restMoney))
+        # print('%s price %.3f limit %.3f stockNum %d totalMoney %d restMoney %d average_cost %.3f' % (date[i], price[i], limit[i], stockNum, totalMoney, restMoney, average_cost))
 
         totalMoney = stockMoney + restMoney + savedMoney
 
-        if price[i] * stockNum < totalMoney * total_rate_e:
+        if price[i] * stockNum < totalMoney * total_rate_e and stockNum != 0:
             average_cost = price[i]
 
 
@@ -139,7 +147,7 @@ def process_main(regular_investment_amount_tmp):
 codenow = '000001'
 
 if __name__ == '__main__':
-    codelist = ['510050']
+    codelist = ['159949']
 
     pool = ThreadPool(4)
 
@@ -154,5 +162,8 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
 
-    # annualized_interest_rate_tmp = process('000001', 0.04, 0.05, 0.13999999999999999, 0.25000000000000006, 0.1, 800)
-    # print annualized_interest_rate_tmp, "'000001', 7.572456451339926, 0.04, 0.05, 0.13999999999999999, 0.25000000000000006, 0.1, 800"
+    # annualized_interest_rate_tmp = process('510050', 0.02,  0.2,  0.16, 0.30000000000000004, 0.05, 800)
+    # print annualized_interest_rate_tmp, "510050 0.02 0.2 0.16 0.30000000000000004 0.05 800"
+
+    # annualized_interest_rate_tmp = process('159949', 0.04, 0.5, 0.02, 0.5, 0.05, 800)
+    # print annualized_interest_rate_tmp, "'159949', 0.04, 0.5, 0.02, 0.5, 0.05, 800"
